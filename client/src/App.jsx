@@ -6,7 +6,6 @@ import {
   ArrowUpRight,
   BookOpenText,
   Check,
-  ChevronDown,
   Clock3,
   Copy,
   FileAudio,
@@ -61,6 +60,7 @@ export default function App() {
   const [editing, setEditing] = useState(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState("Transcribe");
   const socketRef = useRef(null);
   const audioContextRef = useRef(null);
   const streamRef = useRef(null);
@@ -103,6 +103,7 @@ export default function App() {
   useEffect(() => {
     loadRecords("");
     loadStats();
+    setActiveTab("Transcribe");
   }, []);
 
   useEffect(() => {
@@ -204,7 +205,9 @@ export default function App() {
           try {
             await context.audioWorklet.addModule("/pcm-worklet.js");
           } catch (error) {
-            setNotice("Failed to add audio worklet module. Recording may not work properly.");
+            setNotice(
+              "Failed to add audio worklet module. Recording may not work properly.",
+            );
           }
           const source = context.createMediaStreamSource(stream);
           const worklet = new AudioWorkletNode(
@@ -218,7 +221,7 @@ export default function App() {
           );
           worklet.port.onmessage = (event) => {
             if (socket.connected) socket.emit("audio:chunk", event.data);
-            else setNotice("socket connection error! please refresh the page")
+            else setNotice("socket connection error! please refresh the page");
           };
           source.connect(worklet);
           worklet.connect(context.destination);
@@ -425,18 +428,27 @@ export default function App() {
         </div>
         <div className="workspace-label">WORKSPACE</div>
         <nav className="side-nav">
-          <button className="nav-item active">
+          <button
+            className={`nav-item ${activeTab === "Transcribe" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTab("Transcribe");
+              document
+                .getElementById("top-section")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
             <AudioLines size={18} />
             <span>Transcribe</span>
             <span className="nav-shortcut">⌘ 1</span>
           </button>
           <button
-            className="nav-item"
-            onClick={() =>
+            className={`nav-item ${activeTab === "History" ? "active" : ""}`}
+            onClick={() => {
+              setActiveTab("History");
               document
                 .getElementById("history-section")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
           >
             <BookOpenText size={18} />
             <span>History</span>
@@ -455,7 +467,7 @@ export default function App() {
 
       <main className="main-area">
         <div className="page-content">
-          <section className="page-heading">
+          <section className="page-heading" id="top-section">
             <div>
               <div className="eyebrow">
                 <span className="eyebrow-bar" /> YOUR VOICE, IN TEXT
@@ -482,8 +494,6 @@ export default function App() {
             </button>
           </section>
 
-         
-
           <section className="stats-grid" aria-label="Transcription statistics">
             <StatCard
               icon={<FileText size={18} />}
@@ -505,7 +515,7 @@ export default function App() {
             />
           </section>
 
-          <section className="recording-card">
+          <section className="recording-card" id="transcribe-section">
             <div className="recording-topline">
               <div className="recording-title-wrap">
                 <div className="section-icon">
@@ -697,7 +707,7 @@ export default function App() {
               </div>
             </div>
           </section>
-           {notice && (
+          {notice && (
             <div
               className={`notice ${notice.toLowerCase().includes("failed") || notice.toLowerCase().includes("could not") || notice.toLowerCase().includes("unable") || notice.toLowerCase().includes("blocked") ? "notice-error" : ""}`}
               role="status"
@@ -733,9 +743,6 @@ export default function App() {
                   />
                   <kbd>/</kbd>
                 </label>
-                <button className="sort-button" title="Newest first">
-                  Newest <ChevronDown size={14} />
-                </button>
               </div>
             </div>
             <div className="history-table-wrap">
