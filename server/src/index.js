@@ -58,7 +58,7 @@ const wordCount = (value) => {
 };
 const cleanTitle = (value, content = "") => {
   const title = typeof value === "string" ? value.trim() : "";
-  if (title) return title.slice(0, 100);
+  if (title) return title.slice(0, 160);
   const generated = String(content || "")
     .trim()
     .replace(/\s+/gu, " ");
